@@ -3,18 +3,6 @@
 # Name: Yujia Lin
 
 .data 
-integers:	.byte	0
-forward:	.byte	1
-
-numInts:	.word	4
-
-ints:
-	.word	10
-	.word 	0
-	.word	-20
-	.word	20
-	
-str:	.asciiz "The quick browm fox jumps over the lazy dog."
 newLine:	.asciiz "\n"
 
 .text 
@@ -119,18 +107,66 @@ integerBackwardLoopEnd:
 stringForward:
 	addi	$t1, $zero, 0	# i = 0
 	la	$t0, str
+	
 stringForwardBegin:
 	add	$t2, $t0, $t1
 	lb	$t3, 0($t2)
-	beq	$t3, $zero, checkStringBackward
-	add	$t3, $t3, $t1
+	beq	$t3, $zero, checkStringBackward # if str[i] = '\0' then jump to checkStringBackward
+	add	$t3, $t1, $t0
+	lb	$s4, 0($t3)
+	slti	$t5, $s4, 65
+	bne	$t5, $zero, do
+	slti	$t5, $s4, 91
+	bne	$t5, $zero, stringForwardPlus
 	
+do:
+	lb	$a0, 0($t3) 
+	addi	$v0, $zero, 11
+	syscall
 	
+	la	$a0, newLine	#
+	addi	$v0, $zero, 4	# Print newLine
+	syscall
 	
-	
+stringForwardPlus:
+	addi	$t1, $t1, 1	# i ++
+	j	stringForwardBegin
+
 
 stringBackward:
-	j	done
+	addi	$t1, $zero, 0	# i = 0
+	la	$t0, str
+
+stringBackwardBegin:
+	add	$t2, $t0, $t1
+	lb	$t3, 0($t2)
+	beq	$t3, $zero, setIndex # if str[i] = '\0' then jump to setIndex
+	add	$t3, $t1, $t0
+	addi	$t1, $t1, 1	# i ++
+	j	stringBackwardBegin
+
+setIndex:
+	sub	$t1, $t1, 1 
+	la	$t0, str
+	
+stringBackwardLoopBegin:
+	slt	$t3, $t1, $zero
+	bne	$t3, $zero, done
+	
+	add	$t3, $t1, $t0
+	lb	$s4, 0($t3)
+		
+stringBackwardPrint:
+	lb	$a0, 0($t3) 
+	addi	$v0, $zero, 11
+	syscall
+	
+	la	$a0, newLine	#
+	addi	$v0, $zero, 4	# Print newLine
+	syscall
+	
+	sub	$t1, $t1, 1	# i --
+	j	stringBackwardLoopBegin
         
 done:
 	# Epilogue for main -- restore stack & frame pointers and return
