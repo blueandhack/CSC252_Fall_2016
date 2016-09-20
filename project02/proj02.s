@@ -3,7 +3,7 @@
 # Name: Yujia Lin
 
 .data 
-integers:	.byte	1
+integers:	.byte	0
 forward:	.byte	1
 
 numInts:	.word	4
@@ -115,7 +115,19 @@ integerBackwardLoopBegin:
 integerBackwardLoopEnd:
 	j	checkStringForward
 
+
 stringForward:
+	addi	$t1, $zero, 0	# i = 0
+	la	$t0, str
+stringForwardBegin:
+	add	$t2, $t0, $t1
+	lb	$t3, 0($t2)
+	beq	$t3, $zero, checkStringBackward
+	add	$t3, $t3, $t1
+	
+	
+	
+	
 
 stringBackward:
 	j	done
