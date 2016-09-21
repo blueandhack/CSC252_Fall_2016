@@ -39,7 +39,7 @@ checkIntegerBackward:
 checkStringForward:
 	bne	$s0, $zero, checkStringBackward		# if integers != 0 then jump to checkStringBackward
 	beq	$s1, $zero, checkStringBackward		# if forward == 0 then jump to checkStringBackward
-	j	stringForward			# if integers == 0 && forward != 0 then jump to stringForward
+	j	stringForward				# if integers == 0 && forward != 0 then jump to stringForward
 
 checkStringBackward:
 	bne	$s0, $zero, done			# if integers != 0 then jump to done
@@ -48,122 +48,153 @@ checkStringBackward:
 	
 	                
 integerForward:
+
 	addi	$t1, $zero, 0	# $t1 = i = 0
 	la	$t0, ints
+
 integerForwardLoopBegin:
+
 	# Test if for loop is done
 	slt	$t2, $t1, $s3	# $t2 = i < numInts
 	beq	$t2, $zero, integerForwardLoopEnd
+	
 	# Compute address of ints[i]
-	add	$t3, $t1, $t1
+	add	$t3, $t1, $t1	#
 	add	$t3, $t3, $t3	# $t3 = 4 * i
 	add	$t2, $t0, $t3	# $t2 = address of ints[i]
-	lw	$t4, 0($t2)
+	
+	lw	$t4, 0($t2)				# $t4 = ints[i]
 	bne	$t4, $zero, printIntegersForForward	# if ints[i] != 0 then jump to printIntegersForForward
 	j	integerForwardPlus	# if ints[i] == 0 then jump to integerForwardLoopBegin
+	
 printIntegersForForward:
+
+	# Print ints[i]
 	lw	$a0, 0($t2)	#
 	addi	$v0, $zero, 1	# Print ints[i]
 	syscall			#
 	
+	# Print newLine
 	la	$a0, newLine	#
 	addi	$v0, $zero, 4	# Print newLine
 	syscall			#
+	
 	j	integerForwardPlus
 
-integerForwardPlus:	
+integerForwardPlus:
+
 	addi	$t1, $t1, 1	# i ++
 	j	integerForwardLoopBegin
 	
 integerForwardLoopEnd:
 	j	checkIntegerBackward
 
+integerBackward:
 
-integerBackward:  
 	sub	$t1, $s3, 1	# $t1 = numInts - 1
-	la	$t0, ints
+	la	$t0, ints	# $t0 = &ints
+
 integerBackwardLoopBegin:
+
 	# Test if for loop is done
-	slt	$t2, $t1, $zero	# $t2 = i < 0
-	bne	$t2, $zero, integerBackwardLoopEnd
-	# Compute address of ints[i]
-	add	$t3, $t1, $t1
-	add	$t3, $t3, $t3
-	add	$t2, $t0, $t3
-	lw	$a0, 0($t2)
-	addi	$v0, $zero, 1
-	syscall
+	slt	$t2, $t1, $zero		# $t2 = i < 0
+	bne	$t2, $zero, integerBackwardLoopEnd	# If i < 0 then jump to integerBackwardLoopEnd
 	
+	# Compute address of ints[i]
+	add	$t3, $t1, $t1	#
+	add	$t3, $t3, $t3	# $t3 = 4 * i
+	add	$t2, $t0, $t3	# $t2 = address of ints[i]
+	
+	# Print ints[i]
+	lw	$a0, 0($t2)	# 
+	addi	$v0, $zero, 1	# Print ints[i]
+	syscall			#
+	
+	# Print newLine
 	la	$a0, newLine	#
 	addi	$v0, $zero, 4	# Print newLine
-	syscall	
+	syscall			#
 	
-	sub	$t1, $t1, 1
+	sub	$t1, $t1, 1	# i --
 	j	integerBackwardLoopBegin
+	
 integerBackwardLoopEnd:
 	j	checkStringForward
 
 
 stringForward:
 	addi	$t1, $zero, 0	# i = 0
-	la	$t0, str
+	la	$t0, str	# $t0 = &str
 	
 stringForwardBegin:
-	add	$t2, $t0, $t1
-	lb	$t3, 0($t2)
-	beq	$t3, $zero, checkStringBackward # if str[i] = '\0' then jump to checkStringBackward
-	add	$t3, $t1, $t0
-	lb	$s4, 0($t3)
-	slti	$t5, $s4, 65
-	bne	$t5, $zero, do
-	slti	$t5, $s4, 91
-	bne	$t5, $zero, stringForwardPlus
+
+	add	$t2, $t0, $t1	# $t2 = &str[i]
+	lb	$t3, 0($t2)	# $t3 = str[i]
+	
+	# Check when str[i] = '\0'
+	beq	$t3, $zero, checkStringBackward # If str[i] = '\0' then jump to checkStringBackward
+	
+	add	$t3, $t1, $t0	# $t3 = &str[i]
+	lb	$s4, 0($t3)	# $s4 = str[i]
+	slti	$t5, $s4, 65	# $t5 = str[i] < 'A'
+	bne	$t5, $zero, do	# If str[i] <  'A' then jump to do
+	slti	$t5, $s4, 91	# $t5 = str[i] < 'Z'
+	bne	$t5, $zero, stringForwardPlus	# If str[i] < 'Z' then jump to stringForwardPlus
+	j	do
 	
 do:
-	lb	$a0, 0($t3) 
-	addi	$v0, $zero, 11
-	syscall
+
+	# Print str[i]
+	lb	$a0, 0($t3) 	#
+	addi	$v0, $zero, 11	# Print str[i]
+	syscall			#
 	
+	# Print newLine
 	la	$a0, newLine	#
 	addi	$v0, $zero, 4	# Print newLine
-	syscall
+	syscall			#
 	
 stringForwardPlus:
+
 	addi	$t1, $t1, 1	# i ++
 	j	stringForwardBegin
 
 
 stringBackward:
 	addi	$t1, $zero, 0	# i = 0
-	la	$t0, str
+	la	$t0, str	# $t0 = &str
 
 stringBackwardBegin:
-	add	$t2, $t0, $t1
-	lb	$t3, 0($t2)
-	beq	$t3, $zero, setIndex # if str[i] = '\0' then jump to setIndex
-	add	$t3, $t1, $t0
-	addi	$t1, $t1, 1	# i ++
+
+	add	$t2, $t0, $t1		# $t2 = &str[i]
+	lb	$t3, 0($t2)		# $t3 = str[i]
+	
+	beq	$t3, $zero, setIndex 	# if str[i] = '\0' then jump to setIndex
+	addi	$t1, $t1, 1		# i ++
 	j	stringBackwardBegin
 
 setIndex:
-	sub	$t1, $t1, 1 
-	la	$t0, str
+	sub	$t1, $t1, 1 	# i = 0
+	la	$t0, str	# $t0 = &str
 	
 stringBackwardLoopBegin:
-	slt	$t3, $t1, $zero
-	bne	$t3, $zero, done
+
+	slt	$t3, $t1, $zero		# $t3 = i < 0
+	bne	$t3, $zero, done	# If i < 0 then jump to done
 	
-	add	$t3, $t1, $t0
-	lb	$s4, 0($t3)
+	add	$t3, $t1, $t0		# $t3 = &str[i]
 		
 stringBackwardPrint:
-	lb	$a0, 0($t3) 
-	addi	$v0, $zero, 11
-	syscall
+
+	# Print str[i]
+	lb	$a0, 0($t3) 		# a0 = str[i]
+	addi	$v0, $zero, 11		# Print str[i]
+	syscall				#
 	
+	# Print newLine
 	la	$a0, newLine	#
 	addi	$v0, $zero, 4	# Print newLine
-	syscall
+	syscall			#
 	
 	sub	$t1, $t1, 1	# i --
 	j	stringBackwardLoopBegin
