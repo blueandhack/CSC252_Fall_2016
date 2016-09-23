@@ -28,25 +28,25 @@ main:
         lw	$s3, 0($t0)	# $s3 = numInts
         
 checkIntegerForward:
-	# Do we need print the integer array forward?
+	# Do we need to print the integer array forward?
 	beq	$s0, $zero, checkIntegerBackward	# if integers == 0 then jump to checkIntegerBackward
 	beq	$s1, $zero, checkIntegerBackward	# if forward == 0 then jump to checkIntegerBackward
 	j	integerForward				# if integers != 0 && forward != 0 then jump to integerForward
 	
 checkIntegerBackward:
-	# Do we need print the integer array backward?
+	# Do we need to print the integer array backward?
 	beq	$s0, $zero, checkStringForward		# if integers == 0 then jump to checkStringForward
 	bne	$s1, $zero, checkStringForward		# if forward != 0 then jump to checkStringForward
 	j	integerBackward				# if integers != 0 && forward == 0 then jump to integerBackward
 	
 checkStringForward:
-	# Do we need print the String forward?
+	# Do we need to print the String forward?
 	bne	$s0, $zero, checkStringBackward		# if integers != 0 then jump to checkStringBackward
 	beq	$s1, $zero, checkStringBackward		# if forward == 0 then jump to checkStringBackward
 	j	stringForward				# if integers == 0 && forward != 0 then jump to stringForward
 
 checkStringBackward:
-	# Do we need print the String backward?
+	# Do we need to print the String backward?
 	bne	$s0, $zero, done			# if integers != 0 then jump to done
 	bne	$s1, $zero, done			# if forward != 0 then jump to done
 	j	stringBackward				# if integers == 0 && forward == 0 then jump to stringBackward
@@ -91,8 +91,9 @@ printIntegersForForward:
 
 integerForwardPlus:
 
-	addi	$t1, $t1, 1	# i ++
-	j	integerForwardLoopBegin
+	# i ++ then jump to integerForwardLoopBegin
+	addi	$t1, $t1, 1		# i ++
+	j	integerForwardLoopBegin	#
 	
 integerForwardLoopEnd:
 	j	checkIntegerBackward
@@ -103,7 +104,7 @@ integerBackward:
 	
 	# numInts is number of the array, but the index less then the numInts
 	# so we should minus 1 for numInts
-	sub	$t1, $s3, 1	# $t1 = numInts - 1
+	addi	$t1, $s3, -1	# $t1 = numInts - 1
 	la	$t0, ints	# $t0 = &ints
 
 integerBackwardLoopBegin:
@@ -113,7 +114,7 @@ integerBackwardLoopBegin:
 	bne	$t2, $zero, integerBackwardLoopEnd	# If i < 0 then jump to integerBackwardLoopEnd
 	
 	# Compute address of ints[i]
-	add	$t3, $t1, $t1	#
+	add	$t3, $t1, $t1	# $t3 = 2 * i
 	add	$t3, $t3, $t3	# $t3 = 4 * i
 	add	$t2, $t0, $t3	# $t2 = address of ints[i]
 	
@@ -128,7 +129,7 @@ integerBackwardLoopBegin:
 	syscall			#
 	
 	# i -- then jump to integerBackwardLoopBegin
-	sub	$t1, $t1, 1	# i --
+	addi	$t1, $t1, -1	# i --
 	j	integerBackwardLoopBegin
 	
 integerBackwardLoopEnd:
@@ -152,7 +153,7 @@ stringForwardBegin:
 	# Check when str[i] = '\0'
 	beq	$t3, $zero, checkStringBackward # If str[i] = '\0' then jump to checkStringBackward
 	
-	# Compute address of str[i]
+	# Compute address of str[i] and put it in $ts4
 	add	$t3, $t1, $t0	# $t3 = &str[i]
 	lb	$s4, 0($t3)	# $s4 = str[i]
 	
@@ -185,6 +186,7 @@ stringBackward:
 	# Print the String backward
 	# We'll check every step
 
+	# init i and load address of str
 	addi	$t1, $zero, 0	# i = 0
 	la	$t0, str	# $t0 = &str
 
@@ -202,7 +204,7 @@ stringBackwardBegin:
 setIndex:
 
 	# i --
-	addi	$t1, $t1, -1 	# Before we got the i that the String length i = i - 1 
+	addi	$t1, $t1, -1 	# Before we got the i that the String length, but index needs i = i - 1 
 	
 	# Load str's address
 	la	$t0, str	# $t0 = &str
@@ -219,7 +221,7 @@ stringBackwardLoopBegin:
 stringBackwardPrint:
 
 	# Print str[i]
-	lb	$a0, 0($t3) 		# a0 = str[i]
+	lb	$a0, 0($t3) 		# $a0 = str[i]
 	addi	$v0, $zero, 11		# Print str[i]
 	syscall				#
 	
