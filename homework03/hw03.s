@@ -1,5 +1,6 @@
 .data
 mask: .word 0xF0F0F0F0
+number: .word 1
 .text
 main:
 
@@ -21,3 +22,17 @@ main:
 	addi	$a0, $zero, 0xa		# print_char('\n')
 	add	$v0, $zero, 11
 	syscall
+
+	la	$t0, number
+	lw	$s0, 0($t0)
+	
+	sll	$s1, $s0, 1
+	add	$s1, $s1, $s0
+	sll	$s1, $s1, 2
+	add	$s1, $s1, $s0
+	
+	add	$a0, $zero, $s1
+	addi	$v0, $zero, 1
+	syscall
+	
+	
