@@ -1,39 +1,70 @@
 .data
-
 mode:
-	.byte		4
-
-strings:
-	.word		one
-	.word		two
-	.word		three
-	.word		four
-	.word		five
-	.word		six
-one:
-	.asciiz		"One"
-two:
-	.asciiz 	"Two"
-three:
-	.asciiz 	"Three"
-four:
-	.asciiz 	"Four"
-five:
-	.asciiz 	"Five"
-six:
-	.asciiz 	"Six"
+	.byte   4       # strcmp
 
 numStrs:
-	.byte 		6
-	
-s1:
-	.byte		0
+	.byte   16
+strings:
+	.word	STR_CONST__zero
+	.word	STR_CONST__one
+	.word	STR_CONST__two
+	.word	STR_CONST__three
+	.word	STR_CONST__four
+	.word	STR_CONST__five
+	.word	STR_CONST__six
+	.word	STR_CONST__seven
+	.word	STR_CONST__eight
+	.word	STR_CONST__nine
+	.word	STR_CONST__ten
+	.word	STR_CONST__eleven
+	.word	STR_CONST__twelve
+	.word	STR_CONST__thirteen
+	.word	STR_CONST__fourteen
+	.word	STR_CONST__fifteen
 
+STR_CONST__zero:
+	.asciiz "zero"
+STR_CONST__one:
+	.asciiz "one"
+STR_CONST__two:
+	.asciiz "two"
+STR_CONST__three:
+	.asciiz "three"
+STR_CONST__four:
+	.asciiz "four"
+STR_CONST__five:
+	.asciiz "five"
+STR_CONST__six:
+	.asciiz "six"
+STR_CONST__seven:
+	.asciiz "seven"
+STR_CONST__eight:
+	.asciiz "eight"
+STR_CONST__nine:
+	.asciiz "nine"
+STR_CONST__ten:
+	.asciiz "ten"
+STR_CONST__eleven:
+	.asciiz "eleven"
+STR_CONST__twelve:
+	.asciiz "twelve"
+STR_CONST__thirteen:
+	.asciiz "thirteen"
+STR_CONST__fourteen:
+	.asciiz "fourteen"
+STR_CONST__fifteen:
+	.asciiz "fifteen"
+
+
+s1:
+	.byte   14
 s2:
-	.byte		1
-	
+	.byte   15
 c:
-	.half		1
+	.half   0
+	
+debug:
+	.asciiz "Debug"
 	
 # ----- STUDENT CODE BELOW -----	
 
@@ -158,7 +189,7 @@ compareAndSwapTwoString:
         add	$t0, $t0, $t0				#
         add	$t2, $s1, $t0				#
         
-        lw	$t3, 0($t2)				# string[s1]
+        lw	$t3, 0($t2)				# $t3 = string[s1]
         
         # add	$a0, $zero, $t3
         # addi	$v0, $zero, 4
@@ -174,13 +205,78 @@ compareAndSwapTwoString:
         add	$t0, $t0, $t0				#
         add	$t2, $s1, $t0				#
         
-        lw	$t4, 0($t2)				# string[s2]
+        lw	$t4, 0($t2)				# $t4 = string[s2]
 	        
         # add	$a0, $zero, $t4
         # addi	$v0, $zero, 4
         # syscall
         
-        j	done
+        # $t3 = s1  $t4 = s2
+        addi	$t0, $zero, 0				# i = 0
+        
+compareLoop:
+	add	$t1, $t3, $t0
+	lb	$t5, 0($t1)
+	
+	add	$t1, $t4, $t0
+	lb	$t6, 0($t1)
+        
+        beq	$t5, $zero, compareLoopEnd
+        beq	$t6, $zero, compareLoopEnd
+        
+        slt	$t1, $t5, $t6				# if str1[i] < str2[i]
+        bne	$t1, $zero, s1smalls2
+        slt	$t1, $t6, $t5				# if str1[i] > str2[i]
+        bne	$t1, $zero, s2smalls1
+        
+        addi	$t0, $t0, 1				# i ++
+        
+        j	compareLoop
+        
+compareLoopEnd:
+	
+	j	printStringMode
+s1smalls2:
+	slt	$t1, $s3, $s4				# s1 < s2
+	bne	$t1, $zero, compareEnd
+	# s1 > s2
+	# $t3 address for str1 $t4 address for str2
+	addi	$t1, $s3, 0				# i = s1
+        
+        add	$t0, $t1, $t1				#
+        add	$t0, $t0, $t0				#
+        add	$t2, $s1, $t0				#
+        sw	$t4, 0($t2)
+        
+        addi	$t1, $s4, 0				# i = s2
+        
+        add	$t0, $t1, $t1				#
+        add	$t0, $t0, $t0				#
+        add	$t2, $s1, $t0				#
+	sw	$t3, 0($t2)
+	
+s2smalls1:	
+	slt	$t1, $s4, $s3				# s2 < s1
+	bne 	$t1, $zero, compareEnd
+	# s1 < s2
+	addi	$t1, $s3, 0				# i = s1
+        
+        add	$t0, $t1, $t1				#
+        add	$t0, $t0, $t0				#
+        add	$t2, $s1, $t0				#
+        sw	$t4, 0($t2)
+        
+        addi	$t1, $s4, 0				# i = s2
+        
+        add	$t0, $t1, $t1				#
+        add	$t0, $t0, $t0				#
+        add	$t2, $s1, $t0				#
+	sw	$t3, 0($t2)
+	
+	
+	
+compareEnd:
+        j	printStringMode	
         
 done:
 	# Epilogue for main -- restore stack & frame pointers and return
