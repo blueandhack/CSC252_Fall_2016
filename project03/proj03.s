@@ -152,9 +152,35 @@ doubleIndexMode:
 	j	done
 	
 compareAndSwapTwoString:   
+        addi	$t1, $s3, 0				# i = s1
         
+        add	$t0, $t1, $t1				#
+        add	$t0, $t0, $t0				#
+        add	$t2, $s1, $t0				#
         
-        j	printStringMode
+        lw	$t3, 0($t2)				# string[s1]
+        
+        # add	$a0, $zero, $t3
+        # addi	$v0, $zero, 4
+        # syscall
+        
+        # addi	$a0, $zero, 0xa				# print_char('\n')
+	# add	$v0, $zero, 11
+	# syscall
+        
+        addi	$t1, $s4, 0				# i = s2
+        
+        add	$t0, $t1, $t1				#
+        add	$t0, $t0, $t0				#
+        add	$t2, $s1, $t0				#
+        
+        lw	$t4, 0($t2)				# string[s2]
+	        
+        # add	$a0, $zero, $t4
+        # addi	$v0, $zero, 4
+        # syscall
+        
+        j	done
         
 done:
 	# Epilogue for main -- restore stack & frame pointers and return
