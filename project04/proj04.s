@@ -308,42 +308,53 @@ printRev:
 	addiu	$sp, $sp, -24
 	sw      $fp, 0($sp)
 	sw      $ra, 4($sp)
+	sw	$a0, 8($sp)			# save parameter value
 	addiu   $fp, $sp, 20
 	
 	
 	
-	addiu	$sp, $sp, -12
+	addiu	$sp, $sp, -20
+	sw	$s5, 16($sp)
+	sb	$s4, 14($sp)
+	sb	$s3, 12($sp)
 	sw	$s2, 8($sp)
 	sw	$s1, 4($sp)
-	sw	$s0, 0($sp)
+	sw	$s0, 0($sp)    
 	
-	sw    	$a0, 8($sp)     # save parameter value
-	
-	addi	$s0, $zero, 0	# i = 0
-	
+	addi	$s0, $zero, 0			# i = 0
+	addi	$s2, $a0, 0
+	addi	$s4, $zero, 0
 loopBegin:
-	add	$s1, $a0, $s0
+	add	$s1, $s2, $s0
 	
-	lb	$a0, 0($s1)
+	lb	$s3, 0($s1)
 	
-	addi	$v0, $zero, 1
-	syscall
+	#addi	$a0, $s2, 0
+	#addi	$v0, $zero, 11
+	#syscall
 	
-	beq	$a0, $zero, loopEnd
+	beq	$s3, $zero, loopEnd
 	
 	
-	addi	$s0, $s0, 1	# i++
+	addiu	$sp, $sp, -1
+	sb	$s3, 0($sp)
+	
+	addi	$s0, $s0, 1			# i++
 	j	loopBegin
 	
 loopEnd:
-	add	$v0, $zero, $t0 
+	add	$v0, $zero, $s0
+	
+	
 printSomethings:
 	
+	add	$s2, $sp, $zero
+	addi	$a0, $s2, 0
 	jal	printStr
 	
 	# Function epilogue -- restore stack & frame pointers and return
-        lw    	$ra, 4($sp)     # get return address from stack
-        lw    	$fp, 0($sp)     # restore the caller's frame pointer
-        addiu 	$sp, $sp, 24    # restore the caller's stack pointer
-        jr    	$ra             # return to caller's code
+        lw    	$ra, 4($sp)     		# get return address from stack
+        lw    	$fp, 0($sp)     		# restore the caller's frame pointer
+        addiu 	$sp, $sp, 24    		# restore the caller's stack pointer
+        jr    	$ra             		# return to caller's code
 	
