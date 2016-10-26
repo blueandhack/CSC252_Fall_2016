@@ -387,10 +387,10 @@ printRevDone:
 
 	# Function epilogue -- restore stack & frame pointers and return
 	lw	$a0, 8($sp)
-        lw    	$ra, 4($sp)     			# get return address from stack
-        lw    	$fp, 0($sp)     			# restore the caller's frame pointer
-        addiu 	$sp, $sp, 24    			# restore the caller's stack pointer
-        jr    	$ra             			# return to caller's code
+        lw    	$ra, 4($sp)				# get return address from stack
+        lw    	$fp, 0($sp)				# restore the caller's frame pointer
+        addiu 	$sp, $sp, 24				# restore the caller's stack pointer
+        jr    	$ra					# return to caller's code
 
 
 .text
@@ -481,10 +481,10 @@ nibbleScanDone:
 	# Function epilogue -- restore stack & frame pointers and return
 	lw	$a1, 12($sp)
 	lw	$a0, 8($sp)
-        lw    	$ra, 4($sp)     			# get return address from stack
-        lw    	$fp, 0($sp)     			# restore the caller's frame pointer
-        addiu 	$sp, $sp, 24    			# restore the caller's stack pointer
-        jr    	$ra             			# return to caller's code
+        lw    	$ra, 4($sp)				# get return address from stack
+        lw    	$fp, 0($sp)				# restore the caller's frame pointer
+        addiu 	$sp, $sp, 24				# restore the caller's stack pointer
+        jr    	$ra		 			# return to caller's code
 
 
 .text
@@ -513,6 +513,10 @@ multiply:
 	
 	beq	$a0, $zero, multiplyDone		# if val1 == 0 jump to multiplyDone
 	beq	$a1, $zero, multiplyDone		# if val2 == 0 jump to multiplyDone
+	
+	
+	
+	
 
 multiplyDone:
 	add	$v0, $zero, $s0				# return product
@@ -530,7 +534,7 @@ multiplyDone:
 	# Function epilogue -- restore stack & frame pointers and return
 	lw	$a1, 12($sp)
 	lw	$a0, 8($sp)
-        lw    	$ra, 4($sp)     			# get return address from stack
-        lw    	$fp, 0($sp)     			# restore the caller's frame pointer
-        addiu 	$sp, $sp, 24    			# restore the caller's stack pointer
-        jr    	$ra             			# return to caller's code
+        lw    	$ra, 4($sp)				# get return address from stack
+        lw    	$fp, 0($sp)				# restore the caller's frame pointer
+        addiu 	$sp, $sp, 24				# restore the caller's stack pointer
+        jr    	$ra					# return to caller's code
