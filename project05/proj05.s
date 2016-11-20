@@ -7,15 +7,24 @@ REGS:
 
 
 PROGRAM:
-	.word	0x2002ffff         # addi    $a0, $zero, -1
+	.word	0x20080000         # addi    $t0, $zero, 0
+	.word	0x2009000a         # addi    $t1, $zero, 10
+		                   # LOOP_1
+	.word	0x20020001         # addi    $v0, $zero, 1
+	.word	0x01002020         # add     $a0, $t0, $zero
+	.word	0x0000000c         # syscall
+	.word   0x21080001         # addi $t0, $t0, 1
+	.word	0x0109502a         # slt    $t2, $t0, $t1
+	.word	0x1540fffa         # bne    $t2, $zero, LOOP_1
+
+	.word	0x2002000a         # addi    $v0, $zero, 10
+	.word   0x0000000c         # syscall  (10=exit)
 END_PROGRAM:
 
 
 
 MEMORY:
-	.space	4096               # 4 KB
-	.asciiz	"The quick brown fox jumps over the lazy dog.\n"
-	.space	8192               # 8 KB
+	.space	16384              # 16 KB
 END_MEMORY:
 
 
@@ -320,7 +329,6 @@ dumpState_DONE:
 
 
 
-
 # ----- STUDENT CODE BELOW -----
 # proj05.s
 #
@@ -333,14 +341,15 @@ dumpState_DONE:
 
 execInstruction:
 	# function prologue
-	addiu	$sp, $sp, -24				# allocate stack space -- default of 24
+	addiu	$sp, $sp, -28				# allocate stack space -- default of 24
+	lw	$t9, 24($sp)				# get 5th argument
 	sw	$a3, 20($sp)				# save parameter value
 	sw	$a2, 16($sp)				# save parameter value
 	sw	$a1, 12($sp)				# save parameter value
 	sw	$a0, 8($sp)				# save parameter value
 	sw      $ra, 4($sp)				# save return address
 	sw      $fp, 0($sp)				# save frame pointer of caller
-	addiu   $fp, $sp, 20				# setup frame pointer
+	addiu   $fp, $sp, 24				# setup frame pointer
 
 	addiu	$sp, $sp, -32				# allocate stack space
 	sw	$s7, 28($sp)				# save $s7 value
@@ -351,12 +360,231 @@ execInstruction:
 	sw	$s2, 8($sp)				# save $s2 value
 	sw	$s1, 4($sp)				# save $s1 value
 	sw	$s0, 0($sp)				# save $s0 value
+	
+getOpcode:
+	#
+	srl	$s0, $a0, 26				# opcode
+	
+	sll	$s1, $a0, 6
+	srl	$s1, $s1, 27				# rs
+	
+	sll	$s2, $a0, 11
+	srl	$s2, $s2, 27				# rt
+	
+	sll	$s3, $a0, 16
+	srl	$s3, $s3, 27				# rd
+	
+	sll	$s4, $a0, 21
+	srl	$s4, $s4, 27				# shamt
+	
+	sll	$s5, $a0, 26
+	srl	$s5, $s5, 26				# funct
+	
+	sll	$s6, $a0, 16
+	sra	$s6, $s6, 16				# imm
+# ================================
+checkOpcode:	
+	beq	$s0, 8, addiOpcode			# opencode == 8
+	beq	$s0, 9, addiOpcode			# opencode == 9
+	beq	$s0, 2, jOpencode			# opencode == 2
+	beq	$s0, 5, bneOpencode			# opencode == 5
+	
+	beq	$s0, $zero, ifOpcodeEqualsZero
+ifOpcodeEqualsZero:
+	beq	$s5, 32, addFunct			# funct == 32
+	beq	$s5, 34, subFunct			# funct == 34
+	
+	beq	$s5, 42, sltFunct
+	
+	beq	$s5, 12, syscallFunct			# funct == 12
+	
+	j	errorZero
 
-	addi	$a1, $a1, 4
-	add	$v0, $a1, $zero
+addFunct:
+	# add rd, rs, rt
+	j	loadRsValueFromReg
+	
+addFunctLoadRt:
+	j	loadRtValueFromReg
+addFunctLoadRtDone:
+	j	writeRdValueToReg
+	
+subFunct:
+	# sub rd, rs, rt
+	j	loadRsValueFromReg
+
+subFunctLoadRt:
+	j	loadRtValueFromReg
+subFunctLoadRtDone:
+	j	writeRdValueToReg
+
+sltFunct:
+	# slt rd, rs, rt
+	j	loadRsValueFromReg
+sltFunctLoadRt:
+	j	loadRtValueFromReg
+sltFunctLoadRtDone:
+	j	writeRdValueToReg
+			
+jOpencode:
+	sll	$t0, $a0, 6
+	srl	$t0, $t0, 6
+	
+	add	$t0, $t0, $t0
+	add	$t0, $t0, $t0
+	
+	add	$v0, $zero, $t0
+	addi	$v1, $v1, 0				# no error
+	j	execInstructionDone
+
+bneOpencode:	
+	# bne rs, rt, label
+	j	loadRsValueFromReg
+bneOpencodeLoadRt:
+	j	loadRtValueFromReg
+bneOpencodeLoadRtDone:	
+	beq	$s1, $s2, bneOpencodeDone
+	
+	add	$s6, $s6, $s6
+	add	$s6, $s6, $s6
+	
+	addi	$s6, $s6, 4
+	
+	add	$v0, $a1, $s6
+	addi	$v1, $v1, 0				# no error
+	j	execInstructionDone
+	
+bneOpencodeDone:
+	add	$v0, $a1, 4
+	addi	$v1, $v1, 0				# no error
+	j	execInstructionDone
+	
+syscallFunct:
+	lw	$t0, 8($a2)
+	
+	beq	$t0, 10, errorNegativeOne
+	
+	beq	$t0, 4, syscallFunctPrintString
+	
+	lw	$t1, 16($a2)
+	add	$a0, $zero, $t1
+	add	$v0, $zero, $t0
+	syscall
+	
+	j	errorZero
+
+syscallFunctPrintString:
+	lw	$t1, 16($a2)				# load $a0
+	slt	$t2, $t9, $t1				# check memSize < $a0
+	beq	$t2, 1, errorThree			# 
+	
+	add	$t2, $t1, $a3
+	la	$a0, 0($t2)
+	addi	$v0, $zero, 4
+	syscall
+	
+	j	errorZero
+	
+#---------------------------------
+addiOpcode:
+	# addi rt, rs, imm
+	j	loadRsValueFromReg
+addiOpcodeWriteRt:
+	j	writeRtValueToReg
+addiOpcodeDone:
+	j	errorZero
+	
+#=================================
+loadRsValueFromReg:
+	# i - $t0
+	addi	$t0, $s1, 0				#
+	
+	add	$t0, $t0, $t0
+	add	$t0, $t0, $t0				# i * 4
+	
+	add	$t1, $t0, $a2
+	
+	lw	$s1, 0($t1)
+	
+loadRsValueFromRegDone:
+	beq	$s0, 8, addiOpcodeWriteRt
+	beq	$s0, 9, addiOpcodeWriteRt
+	beq	$s0, 5, bneOpencodeLoadRt
+	
+	beq	$s5, 32, addFunctLoadRt
+	beq	$s5, 34, subFunctLoadRt
+	beq	$s5, 42, sltFunctLoadRt
+
+#===================================
+writeRtValueToReg:
+	addi	$t0, $s2, 0				#
+	
+	add	$t0, $t0, $t0
+	add	$t0, $t0, $t0				# i * 4
+	
+	add	$t1, $t0, $a2
+	
+	add	$s6, $s6, $s1
+	
+	sw	$s6, 0($t1)
 	
 	
+	beq	$s0, 8,	addiOpcodeDone
+	beq	$s0, 9,	addiOpcodeDone
+	
+#===================================
+loadRtValueFromReg:
+	addi	$t0, $s2, 0				#
+	
+	add	$t0, $t0, $t0
+	add	$t0, $t0, $t0				# i * 4
+	
+	add	$t1, $t0, $a2
+	
+	lw	$s2, 0($t1)
+	
+	beq	$s0, 5, bneOpencodeLoadRtDone
+	
+	beq	$s5, 32, addFunctLoadRtDone		# funct == 32
+	beq	$s5, 34, subFunctLoadRtDone		# funct == 34
+	beq	$s5, 42, sltFunctLoadRtDone
+	
+#===================================
+writeRdValueToReg:
+	addi	$t0, $s3, 0				#
+	
+	add	$t0, $t0, $t0
+	add	$t0, $t0, $t0				# i * 4
+	
+	add	$t1, $t0, $a2
+	
+	beq	$s5, 32, addFunctWriteRdValueToReg	# funct == 32
+	beq	$s5, 34, subFunctWriteRdValueToReg	# funct == 34
+	beq	$s5, 42, sltFunctWriteRdValueToReg	# funct == 42
+
+addFunctWriteRdValueToReg:
+	add	$t3, $s1, $s2
+	sw	$t3, 0($t1)
+	j	writeRdValueToRegDone
+	
+subFunctWriteRdValueToReg:
+	sub	$t3, $s1, $s2
+	sw	$t3, 0($t1)
+	j	writeRdValueToRegDone
+
+sltFunctWriteRdValueToReg:
+	slt	$t3, $s1, $s2
+	sw	$t3, 0($t1)
+	j	writeRdValueToRegDone
+
+writeRdValueToRegDone:
+	j	errorZero
+
+#===================================
 errorZero:
+	addi	$a1, $a1, 4				# PC + 4
+	add	$v0, $a1, $zero
+
 	addi	$v1, $v1, 0				# no error
 	j	execInstructionDone
 errorOne:
@@ -369,6 +597,7 @@ errorThree:
 	addi	$v1, $v1, 3				# load/store address is outside of the ‘memSize’ bounds
 	j	execInstructionDone
 errorNegativeOne:
+	add	$v0, $a1, $zero
 	addi	$v1, $v1, -1				# syscall 10 (exit) was executed
 	j	execInstructionDone
 
@@ -390,5 +619,5 @@ execInstructionDone:
 	lw	$a0, 8($sp)				# load value to $a0
         lw    	$ra, 4($sp)				# get return address from stack
         lw    	$fp, 0($sp)				# restore the caller's frame pointer
-        addiu 	$sp, $sp, 24				# restore the caller's stack pointer
+        addiu 	$sp, $sp, 28				# restore the caller's stack pointer
         jr    	$ra					# return to caller's code
