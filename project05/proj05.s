@@ -388,6 +388,7 @@ checkOpcode:
 	beq	$s0, 9, addiOpcode			# opencode == 9
 	beq	$s0, 2, jOpencode			# opencode == 2
 	beq	$s0, 5, bneOpencode			# opencode == 5
+	beq	$s0, 4, beqOpencode			# opencode == 4
 	
 	beq	$s0, $zero, ifOpcodeEqualsZero
 ifOpcodeEqualsZero:
@@ -459,6 +460,28 @@ bneOpencodeDone:
 	addi	$v1, $v1, 0				# no error
 	j	execInstructionDone
 	
+beqOpencode:
+	# beq rs, rt, label
+	j	loadRsValueFromReg
+beqOpencodeLoadRt:
+	j	loadRtValueFromReg
+beqOpencodeLoadRtDone:
+	bne	$s1, $s2, beqOpencodeDone
+	
+	add	$s6, $s6, $s6
+	add	$s6, $s6, $s6
+	
+	addi	$s6, $s6, 4
+	
+	add	$v0, $a1, $s6
+	addi	$v1, $v1, 0				# no error
+	j	execInstructionDone
+	
+beqOpencodeDone:
+	add	$v0, $a1, 4
+	addi	$v1, $v1, 0				# no error
+	j	execInstructionDone
+	
 syscallFunct:
 	lw	$t0, 8($a2)
 	
@@ -510,6 +533,7 @@ loadRsValueFromRegDone:
 	beq	$s0, 8, addiOpcodeWriteRt
 	beq	$s0, 9, addiOpcodeWriteRt
 	beq	$s0, 5, bneOpencodeLoadRt
+	beq	$s0, 4, beqOpencodeLoadRt
 	
 	beq	$s5, 32, addFunctLoadRt
 	beq	$s5, 34, subFunctLoadRt
@@ -544,6 +568,7 @@ loadRtValueFromReg:
 	lw	$s2, 0($t1)
 	
 	beq	$s0, 5, bneOpencodeLoadRtDone
+	beq	$s0, 4, beqOpencodeLoadRtDone
 	
 	beq	$s5, 32, addFunctLoadRtDone		# funct == 32
 	beq	$s5, 34, subFunctLoadRtDone		# funct == 34
