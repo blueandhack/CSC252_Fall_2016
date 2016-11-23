@@ -391,6 +391,9 @@ checkOpcode:
 	beq	$s0, 4, beqOpencode			# opencode == 4
 	
 	beq	$s0, $zero, ifOpcodeEqualsZero
+	
+	j	errorOne
+	
 ifOpcodeEqualsZero:
 	beq	$s5, 32, addFunct			# funct == 32
 	beq	$s5, 34, subFunct			# funct == 34
@@ -399,7 +402,7 @@ ifOpcodeEqualsZero:
 	
 	beq	$s5, 12, syscallFunct			# funct == 12
 	
-	j	errorZero
+	j	errorOne
 
 addFunct:
 	# add rd, rs, rt
@@ -613,12 +616,15 @@ errorZero:
 	addi	$v1, $v1, 0				# no error
 	j	execInstructionDone
 errorOne:
+	add	$v0, $a1, $zero
 	addi	$v1, $v1, 1				# invalid opcode or func ﬁeld
 	j	execInstructionDone
 errorTwo:
+	add	$v0, $a1, $zero
 	addi	$v1, $v1, 2				# alignment exception (on lw/sw)
 	j	execInstructionDone
 errorThree:
+	add	$v0, $a1, $zero
 	addi	$v1, $v1, 3				# load/store address is outside of the ‘memSize’ bounds
 	j	execInstructionDone
 errorNegativeOne:
